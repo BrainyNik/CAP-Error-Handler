@@ -21,12 +21,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourorg/error-service.git"
+    "url": "git+https://github.com/BrainyNik/CAP-Error-Handler.git"
   },
   "bugs": {
-    "url": "https://github.com/yourorg/error-service/issues"
+    "url": "https://github.com/BrainyNik/CAP-Error-Handler.git/issues"
   },
-  "homepage": "https://github.com/yourorg/error-service#readme",
+  "homepage": "https://github.com/BrainyNik/CAP-Error-Handler.git#readme",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://registry.npmjs.org/"
