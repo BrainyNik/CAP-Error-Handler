@@ -27,6 +27,7 @@ module.exports = {
      * @description Converts any raw JS, SQL, or integration error into a standardized CustomError instance.
      * @param {Error} err - The original error object
      * @param {string} [module] - The module or domain where the error occurred
+    * @param {Object} params.req - CAP request object (optional) 
      * @returns {CustomError} Normalized error instance
      */
     normalizeError,
