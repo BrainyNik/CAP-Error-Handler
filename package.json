@@ -1,0 +1,37 @@
+{
+  "name": "@yourorg/error-service",
+  "version": "1.0.0",
+  "description": "Enterprise-wide standardized error handling module for Node.js/CAP projects",
+  "main": "index.js",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "error",
+    "custom-error",
+    "CAP",
+    "SAP HANA",
+    "CPI",
+    "enterprise"
+  ],
+  "author": "Your Name <your.email@org.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourorg/error-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourorg/error-service/issues"
+  },
+  "homepage": "https://github.com/yourorg/error-service#readme",
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
