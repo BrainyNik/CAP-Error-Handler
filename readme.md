@@ -38,7 +38,8 @@ const { normalizeError } = require('@yourorg/error-service');
 
 cds.on('error', async (err, req) => {
 const error = normalizeError(err, req?.target?.name);
-await error.logError(cds);
+await error.logError({cds,tableName : "ErrorLogTableName"});
+
 return error.toCdsError(cds);
 });
 
@@ -57,6 +58,6 @@ throw new ErrorTypes.ValidationError({ message: "Email is required" });
 
 } catch (err) {
 const error = normalizeError(err, "UserModule");
-await error.logError(cds);
+await error.logError({cds,tableName : "ErrorLogTableName"});
 throw error.toCdsError(cds); // CAP-friendly error for UI
 }
