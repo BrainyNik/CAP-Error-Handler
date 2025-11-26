@@ -1,39 +1,33 @@
-# Enterprise Error Service
+# @yourorg/error-service
 
-A centralized, reusable, organization-wide **error-handling module** for Node.js & SAP CAP applications.  
-Provides consistent error structures, HDI logging, normalization, and optional email notifications.
+### Centralized Enterprise Error Handling for Node.js & SAP CAP
 
----
-
-# Features
-
-- Base `CustomError` with enterprise-grade structured metadata
-- Standard error types: ValidationError (400), AuthorizationError (401/403), BusinessLogicError (422)
-- `normalizeError()` for CAP, runtime, HANA DBTech, Axios/CPI, and unknown errors
-- HDI logging using `logError()`
-- Outlook-safe HTML email templates via `createEmailNotifier()` & `buildErrorEmailBody()`
+A reusable, organization-wide **error-handling framework** designed specifically for **Node.js** and **SAP CAP** applications.  
+It standardizes error structures, logging, notifications, and request metadata across all microservices and modules.
 
 ---
 
-# Installation
+# 📌 Features
+
+- Enterprise-grade CustomError
+- Standard error types
+- Request metadata extraction
+- HDI logging
+- Email notifiers (CPI/SMTP/etc)
+- Handler wrappers
+- Normalization of CAP, DBTech, Axios, and unknown errors
+
+---
+
+# 📦 Installation
 
 ```bash
 npm install @yourorg/error-service
 ```
 
-or
-
-```bash
-npm install @yourorg/error-service --registry https://npm.pkg.github.com/
-```
-
 ---
 
-# Usage Guide
-
-# Global Error Handling (Recommended Setup)
-
-#### in each service handler we can add
+# 🚨 Global Error Handling Example
 
 ```js
 const cds = require("@sap/cds");
@@ -52,20 +46,10 @@ const notifyError = createEmailNotifier({
   emailBodyBuilderFn: buildErrorEmailBody,
 });
 
-// catches all the errors of this service handler
 this.on("error", async (err, req) => {
-  console.log("Error triggered");
+  const normalized = normalizeError({ err, req, module: "DSM" });
 
-  const normalized = normalizeError({
-    err,
-    req,
-    module: "DSM",
-  });
-
-  await normalized.logError({
-    cds,
-    tableName: "ErrorLogs",
-  });
+  await normalized.logError({ cds, tableName: "ERRORLOGS" });
 
   await notifyError({
     env: process.env.NODE_ENV,
@@ -78,49 +62,33 @@ this.on("error", async (err, req) => {
 
 ---
 
-## Local Try/Catch Error Handling
+# 🎯 Using `handleErrors` Wrapper (Recommended)
 
 ```js
-const { ErrorTypes, normalizeError } = require("@yourorg/error-service");
+const { Handlers } = require("@yourorg/error-service");
 
-srv.on("createUser", async (req) => {
-  try {
-    if (!req.data.email) {
-      throw new ErrorTypes.ValidationError({
-        message: "Email is required",
-        module: "UserManagement",
-      });
+this.on(
+  "createUser",
+  Handlers.handleErrors(
+    async (req) => {
+      let x = y.z; // throws
+    },
+    {
+      notify,
+      cds,
+      tableName: "ERRORLOGS",
+      module: "UserService",
+      env: process.env.NODE_ENV,
     }
-    await createUser(req.data);
-  } catch (err) {
-    const normalized = normalizeError({ err, req, module: "UserManagement" });
-    await normalized.logError({ cds, tableName: "ErrorLogs" });
-    throw normalized.toCdsError(cds);
-  }
-});
+  )
+);
 ```
 
 ---
 
-## Using Predefined Error Types
+# ✉ Email Notifier Examples
 
-```js
-const { ErrorTypes } = require("@yourorg/error-service");
-
-throw new ErrorTypes.AuthorizationError({
-  message: "Access denied",
-  module: "AccessControl",
-  req,
-  status: 400 || 401 || 402,
-  code: "AUTH_ERR",
-});
-```
-
----
-
-# Email Notification System
-
-## Creating an Email Notifier
+## 1. Basic CPI Email Notifier
 
 ```js
 const {
@@ -128,9 +96,9 @@ const {
   buildErrorEmailBody,
 } = require("@yourorg/error-service");
 
-const sendEmailFn = require("../utils/sendEmailCPI");
+const sendEmailFn = require("./sendEmailCPI");
 
-module.exports = createEmailNotifier({
+const notifyError = createEmailNotifier({
   sendEmailFn,
   TO: ["devteam@yourorg.com"],
   CC: ["lead@yourorg.com"],
@@ -138,87 +106,82 @@ module.exports = createEmailNotifier({
 });
 ```
 
----
-
-## Example sendEmailFn
+## 2. SMTP Transport Example (Nodemailer)
 
 ```js
-module.exports = async function sendEmailFn({ subject, body, to, cc }) {
-  return executeHttpRequest(
-    { destinationName: "CPI" },
-    {
-      method: "POST",
-      url: "/http/sendMail",
-      data: {
-        message: {
-          subject,
-          body: { contentType: "HTML", content: body },
-          toRecipients: to.map((x) => ({ emailAddress: { address: x } })),
-          ccRecipients: cc.map((x) => ({ emailAddress: { address: x } })),
-        },
-      },
-    }
-  );
-};
-```
+const nodemailer = require("nodemailer");
+const { createEmailNotifier } = require("@yourorg/error-service");
 
----
+const transporter = nodemailer.createTransport({
+  host: "smtp.yourorg.com",
+  port: 587,
+  secure: false,
+  auth: { user: "bot@yourorg.com", pass: "password" },
+});
 
-# Example Error Payload
-
-```json
-{
-  "code": "VALIDATION_ERR",
-  "message": "Email format is invalid",
-  "status": 400,
-  "target": "email",
-  "details": [
-    {
-      "code": "INVALID_FORMAT",
-      "message": "Email does not match expected pattern",
-      "target": "email"
-    }
-  ],
-  "module": "UserManagement",
-  "internal": {
-    "data": {
-      "email": "abc"
-    },
-    "event": "createUser",
-    "url": "/user-service/createUser",
-    "method": "POST",
-    "user": "admin"
-  }
+async function sendEmailFn({ subject, body, to, cc }) {
+  await transporter.sendMail({
+    from: "bot@yourorg.com",
+    to,
+    cc,
+    subject,
+    html: body,
+  });
 }
+
+const notifyError = createEmailNotifier({
+  sendEmailFn,
+  TO: ["ops@yourorg.com"],
+  CC: ["lead@yourorg.com"],
+});
+```
+
+## 3. Logging-only Notifier (no email)
+
+```js
+const { createEmailNotifier } = require("@yourorg/error-service");
+
+const notifyError = createEmailNotifier({
+  sendEmailFn: null, // disabled
+});
 ```
 
 ---
 
-# API Reference
+# 🧩 Request Metadata Extraction
 
-### CustomError
+```js
+const { Utils } = require("@yourorg/error-service");
 
-Defines standard enterprise error structure.
-
-### normalizeError({ err, req, module })
-
-Converts any thrown error into a `CustomError`.
-
-### createEmailNotifier(config)
-
-Returns an async function to send enterprise error alerts.
-
-### buildErrorEmailBody()
-
-Generates an Outlook-safe HTML email template.
+this.before("*", (req) => {
+  req.context._meta = Utils.extractRequestMeta(req);
+});
+```
 
 ---
 
-# Best Practices
+# 📘 API Reference
 
-- Always normalize errors globally
-- Use predefined error classes
-- Enable email alerts only in QA/PROD
-- Store error metadata (user, event, payload, request info)
-- Keep project email sender separate
-- Centralize all error logic for maintainability
+- CustomError
+- ErrorTypes
+- normalizeError()
+- createEmailNotifier()
+- buildErrorEmailBody()
+- Handlers.handleErrors()
+- Utils.extractRequestMeta()
+
+---
+
+# 🏆 Best Practices
+
+- Wrap handlers with `handleErrors()`
+- Use global error hook
+- Log all errors
+- Use notifiers in QA/PROD
+- Keep email sender outside business code
+
+---
+
+# 📄 License
+
+Proprietary. Internal use only.
