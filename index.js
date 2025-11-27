@@ -23,6 +23,7 @@ const { buildErrorEmailBody } = require("./lib/email/templates/buildErrorEmailBo
 
 // Import the wrapper
 const handleErrorsWrapper = require("./lib/utils/handleErrorsWrapper");
+const extractRequestMetadata = require("./lib/utils/extractRequestMetadata");
 
 module.exports = {
 
@@ -126,6 +127,6 @@ module.exports = {
          *    req.context._meta = Utils.extractRequestMeta(req);
          * });
          */
-        extractRequestMeta
+        extractRequestMetadata
     }
 };
