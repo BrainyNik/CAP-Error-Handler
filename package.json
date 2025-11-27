@@ -1,5 +1,5 @@
 {
-  "name": "@yourorg/error-service",
+  "name": "@custom/rror-service",
   "version": "1.0.0",
   "description": "Enterprise-wide standardized error handling module for Node.js/CAP projects",
   "main": "index.js",
